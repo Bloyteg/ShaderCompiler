@@ -22,6 +22,7 @@ using Microsoft.Build.Utilities;
 using System.IO;
 using SharpDX;
 using SharpDX.D3DCompiler;
+using SharpDX.Direct3D;
 
 namespace ShaderCompiler
 {
@@ -55,6 +56,12 @@ namespace ShaderCompiler
             set;
         }
 
+        public string[] Defines 
+        { 
+            get; 
+            set;
+        }
+
         public string EntryPoint
         {
             get;
@@ -83,23 +90,22 @@ namespace ShaderCompiler
         {
             OutputFiles = (from shaderInput in InputFiles
                            where !string.IsNullOrWhiteSpace(shaderInput.ItemSpec)
-                           select shaderInput.ItemSpec
-                           into inputFile 
+                           let inputFile = shaderInput.ItemSpec
                            let outputFile = Path.Combine(OutputPath, Path.GetFileNameWithoutExtension(inputFile) + ".cso")
                            where outputFile != null
-                           select CompileShaderFile(inputFile, outputFile)).ToArray();
+                           select CompileShaderFile(inputFile, outputFile, GetDefines(shaderInput.GetMetadata("Defines")))).ToArray();
 
             return !Log.HasLoggedErrors;
         }
 
-        private ITaskItem CompileShaderFile(string sourceFile, string outputFile)
+        private ITaskItem CompileShaderFile(string sourceFile, string outputFile, ShaderMacro[] defines)
         {
             try
             {
                 var shaderFlags = GetShaderFlags();
 
                 using (var shaderInclude = new ShaderInclude(IncludePath ?? string.Empty))
-                using (var compilerResult = ShaderBytecode.CompileFromFile(sourceFile, EntryPoint ?? "main", Profile, include: shaderInclude, shaderFlags: shaderFlags))
+                using (var compilerResult = ShaderBytecode.CompileFromFile(sourceFile, EntryPoint ?? "main", Profile, include: shaderInclude, shaderFlags: shaderFlags, defines: defines))
                 {
                     if (compilerResult.HasErrors)
                     {
@@ -143,6 +149,19 @@ namespace ShaderCompiler
                              string.Format("Critical failure ({0}:) {1}", ex.GetType(), ex.Message));
                 return null;
             }
+        }
+
+        private ShaderMacro[] GetDefines(string defines)
+        {
+            if (string.IsNullOrWhiteSpace(defines))
+            {
+                return new ShaderMacro[0];
+            }
+
+            return (from define in defines.Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries)
+                    let defineSplit = define.Split(new[] {"="}, 2, StringSplitOptions.RemoveEmptyEntries)
+                    where defineSplit.Length >= 2
+                    select new ShaderMacro(defineSplit[0], defineSplit[1])).ToArray();
         }
 
         private ShaderFlags GetShaderFlags()
