@@ -1,4 +1,4 @@
-﻿// Copyright 2013 Joshua R. Rodgers
+﻿// Copyright 2015 Joshua R. Rodgers
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -119,8 +119,11 @@ namespace ShaderCompiler
                     }
 
                     var fileInfo = new FileInfo(outputFile);
-                    fileInfo.Directory.Create();
-                    
+                    if (fileInfo.Directory != null)
+                    {
+                        fileInfo.Directory.Create();
+                    }
+
                     File.WriteAllBytes(outputFile, compilerResult.Bytecode.Data);
                     return new TaskItem(outputFile);
                 }

@@ -1,0 +1,56 @@
+  <UsingTask AssemblyFile="$(SolutionDir)\packages\ShaderCompiler\ShaderCompiler.dll" TaskName="Shader" />
+  
+  <!-- Compile vertex shaders -->
+  <Target Name="VertexShaderCompile"
+          BeforeTargets="BeforeBuild"
+          Inputs="@(VertexShader)"
+          Outputs="@(VertexShader -> '$(IntermediateOutputPath)%(Filename).cso' )">
+
+    <Shader InputFiles="@(VertexShader)" OutputPath="$(IntermediateOutputPath)" Profile="vs_4_0" IncludePath="Shaders\Includes\" IsDebug="$(ShaderDebugSymbols)" />
+    <Message Text="Compiled the following vertex shaders: [@(VertexShader)]" Importance="High" />
+  </Target>
+
+  <!-- Compile geometry shaders -->
+  <Target Name="GeometryShaderCompile"
+          BeforeTargets="BeforeBuild"
+          Inputs="@(GeometryShader)"
+          Outputs="@(GeometryShader -> '$(IntermediateOutputPath)%(Filename).cso' )">
+
+    <Shader InputFiles="@(GeometryShader)" OutputPath="$(IntermediateOutputPath)" Profile="gs_4_0" IncludePath="Shaders\Includes\" IsDebug="$(ShaderDebugSymbols)" />
+    <Message Text="Compiled the following geometry shaders: [@(GeometryShader)]" Importance="High"  />
+  </Target>
+
+  <!--Compile pixel shaders -->
+  <Target Name="PixelShaderCompile"
+          BeforeTargets="BeforeBuild"
+          Inputs="@(PixelShader)"
+          Outputs="@(PixelShader -> '$(IntermediateOutputPath)%(Filename).cso' )">
+
+    <Shader InputFiles="@(PixelShader)" OutputPath="$(IntermediateOutputPath)" Profile="ps_4_0" IncludePath="Shaders\Includes\" IsDebug="$(ShaderDebugSymbols)" />
+    <Message Text="Compiled the following pixel shaders: [@(PixelShader)]" Importance="High"  />
+  </Target>
+
+  <!-- Embed resources -->
+  <Target Name="BeforeBuild" AfterTargets="VertexShaderCompile;GeometryShaderCompile;PixelShaderCompile" BeforeTargets="Build">
+    <ItemGroup>
+      <EmbeddedResource Include="@(VertexShader -> '$(IntermediateOutputPath)%(Filename).cso' )">
+        <LogicalName>$(RootNamespace).Shaders.%(Filename)</LogicalName>
+      </EmbeddedResource>
+      
+      <EmbeddedResource Include="@(GeometryShader -> '$(IntermediateOutputPath)%(Filename).cso' )">
+        <LogicalName>$(RootNamespace).Shaders.%(Filename)</LogicalName>
+      </EmbeddedResource>
+      
+      <EmbeddedResource Include="@(PixelShader -> '$(IntermediateOutputPath)%(Filename).cso' )">
+        <LogicalName>$(RootNamespace).Shaders.%(Filename)</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+    
+    <Message Text="Embedded the following filles: [@(EmbeddedResource)]" Importance="high" />
+  </Target>
+
+  <Target Name="Clean">
+    <Delete Files="@(VertexShader -> '$(IntermediateOutputPath)%(Filename).cso' )"/>
+    <Delete Files="@(GeometryShader -> '$(IntermediateOutputPath)%(Filename).cso' )"/>
+    <Delete Files="@(PixelShader -> '$(IntermediateOutputPath)%(Filename).cso' )"/>
+  </Target>
